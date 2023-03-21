@@ -1,0 +1,39 @@
+From 8b0c10494ad45bb9b6f04d545efbef6bb3e20aa7 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:12:18 +0100
+Subject: [PATCH 1/6] adapt for external libraries and Yocto env
+
+---
+ Makefile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 3b1b029..1675c62 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,8 +4,8 @@
+ CC ?= gcc
+ LVGL_DIR_NAME ?= lvgl
+ LVGL_DIR ?= ${shell pwd}
+-CFLAGS ?= -O3 -g0 -I$(LVGL_DIR)/ -Wall -Wshadow -Wundef -Wmissing-prototypes -Wno-discarded-qualifiers -Wall -Wextra -Wno-unused-function -Wno-error=strict-prototypes -Wpointer-arith -fno-strict-aliasing -Wno-error=cpp -Wuninitialized -Wmaybe-uninitialized -Wno-unused-parameter -Wno-missing-field-initializers -Wtype-limits -Wsizeof-pointer-memaccess -Wno-format-nonliteral -Wno-cast-qual -Wunreachable-code -Wno-switch-default -Wreturn-type -Wmultichar -Wformat-security -Wno-ignored-qualifiers -Wno-error=pedantic -Wno-sign-compare -Wno-error=missing-prototypes -Wdouble-promotion -Wclobbered -Wdeprecated -Wempty-body -Wtype-limits -Wshift-negative-value -Wstack-usage=2048 -Wno-unused-value -Wno-unused-parameter -Wno-missing-field-initializers -Wuninitialized -Wmaybe-uninitialized -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wtype-limits -Wsizeof-pointer-memaccess -Wno-format-nonliteral -Wpointer-arith -Wno-cast-qual -Wmissing-prototypes -Wunreachable-code -Wno-switch-default -Wreturn-type -Wmultichar -Wno-discarded-qualifiers -Wformat-security -Wno-ignored-qualifiers -Wno-sign-compare -std=c99
+-LDFLAGS ?= -lm
++CFLAGS ?= -O3 -g0 -I$(LVGL_DIR)/ -I${STAGING_INCDIR}/ -L${STAGING_LIBDIR}/ -Wall -Wshadow -Wundef -Wmissing-prototypes -Wno-discarded-qualifiers -Wall -Wextra -Wno-unused-function -Wno-error=strict-prototypes -Wpointer-arith -fno-strict-aliasing -Wno-error=cpp -Wuninitialized -Wmaybe-uninitialized -Wno-unused-parameter -Wno-missing-field-initializers -Wtype-limits -Wsizeof-pointer-memaccess -Wno-format-nonliteral -Wno-cast-qual -Wunreachable-code -Wno-switch-default -Wreturn-type -Wmultichar -Wformat-security -Wno-ignored-qualifiers -Wno-error=pedantic -Wno-sign-compare -Wno-error=missing-prototypes -Wdouble-promotion -Wclobbered -Wdeprecated -Wempty-body -Wtype-limits -Wshift-negative-value -Wstack-usage=2048 -Wno-unused-value -Wno-unused-parameter -Wno-missing-field-initializers -Wuninitialized -Wmaybe-uninitialized -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wtype-limits -Wsizeof-pointer-memaccess -Wno-format-nonliteral -Wpointer-arith -Wno-cast-qual -Wmissing-prototypes -Wunreachable-code -Wno-switch-default -Wreturn-type -Wmultichar -Wno-discarded-qualifiers -Wformat-security -Wno-ignored-qualifiers -Wno-sign-compare -std=c99
++LDFLAGS ?= -L${STAGING_LIBDIR} -lm
+ BIN = demo
+ 
+ prefix ?= /usr
+@@ -34,9 +34,9 @@ OBJS = $(AOBJS) $(COBJS)
+ all: default
+ 
+ %.o: %.c
+-	@$(CC)  $(CFLAGS) -c $< -o $@
++	@$(CC)  $(CFLAGS) $(UserDefined) -I${shell pwd}/ -c $< -o $@
+ 	@echo "CC $<"
+-    
++
+ default: $(AOBJS) $(COBJS) $(MAINOBJ)
+ 	$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
+ 
+-- 
+2.25.1
+
