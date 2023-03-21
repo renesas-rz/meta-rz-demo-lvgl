@@ -1,0 +1,34 @@
+From a92cc76394e1cd41712ed41827f572eb858c520b Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:34:32 +0100
+Subject: [PATCH 6/6] adapt to changed interface
+
+---
+ main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/main.c b/main.c
+index 6ba4335..5b1fa18 100644
+--- a/main.c
++++ b/main.c
+@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
+         }
+     }
+ 
+-    uint32_t x_res=0, y_res=0, bit_per_pixel=0 ;
++    uint32_t x_res=0, y_res=0, dpi_res=0, bit_per_pixel=0 ;
+     uint32_t display_data_set = -1 ;
+ 
+     /* relaxed device probing */
+@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
+         
+       fbdev_init();
+       fbdev_get_bitperpixel(&bit_per_pixel);
+-      fbdev_get_sizes(&x_res, &y_res);
++      fbdev_get_sizes(&x_res, &y_res, &dpi_res);
+     #endif
+     
+     
+-- 
+2.25.1
+
