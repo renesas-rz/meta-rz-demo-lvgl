@@ -1,0 +1,38 @@
+From 78333935efb0f6a9906872b5a68041d49b4420f9 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:15:23 +0100
+Subject: [PATCH 3/6] change entries for automatic device detection
+
+---
+ lv_drv_conf.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/lv_drv_conf.h b/lv_drv_conf.h
+index d40e703..929d031 100644
+--- a/lv_drv_conf.h
++++ b/lv_drv_conf.h
+@@ -429,9 +429,9 @@
+ #endif
+ 
+ #if USE_LIBINPUT || USE_BSD_LIBINPUT
+-/*If only a single device of the same type is connected, you can also auto detect it, e.g.:
+- *#define LIBINPUT_NAME   libinput_find_dev(LIBINPUT_CAPABILITY_TOUCH, false)*/
+-#  define LIBINPUT_NAME   "/dev/input/event0"        /*You can use the "evtest" Linux tool to get the list of devices and test them*/
++/*If only a single device of the same type is connected, you can also auto detect it, e.g.: */
++#define LIBINPUT_NAME   libinput_find_dev(LIBINPUT_CAPABILITY_TOUCH, false)
++/*  define LIBINPUT_NAME   "/dev/input/event0"   You can use the "evtest" Linux tool to get the list of devices and test them*/
+ 
+ #endif  /*USE_LIBINPUT || USE_BSD_LIBINPUT*/
+ 
+@@ -447,7 +447,7 @@
+ #endif
+ 
+ #if USE_EVDEV || USE_BSD_EVDEV
+-#  define EVDEV_NAME   "/dev/input/event10"        /*You can use the "evtest" Linux tool to get the list of devices and test them*/
++#  define EVDEV_NAME   "/dev/input/event"        /*You can use the "evtest" Linux tool to get the list of devices and test them*/
+ #  define EVDEV_SWAP_AXES         0               /*Swap the x and y axes of the touchscreen*/
+ 
+ #  define EVDEV_CALIBRATE         0               /*Scale and offset the touchscreen coordinates by using maximum and minimum values for each axis*/
+-- 
+2.25.1
+
