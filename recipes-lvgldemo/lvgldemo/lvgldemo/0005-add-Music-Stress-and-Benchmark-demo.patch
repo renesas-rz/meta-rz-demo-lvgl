@@ -1,0 +1,148 @@
+From 7ad8dcdea9a757e3e88ec39a245ca3e01d271452 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:19:08 +0100
+Subject: [PATCH 5/6] add Music Stress and Benchmark demo
+
+---
+ lv_conf.h | 18 +++++++++---------
+ main.c    | 43 +++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 48 insertions(+), 13 deletions(-)
+
+diff --git a/lv_conf.h b/lv_conf.h
+index 76687a4..bd6f2e7 100644
+--- a/lv_conf.h
++++ b/lv_conf.h
+@@ -337,17 +337,17 @@ extern uint32_t custom_tick_get(void);
+  *https://fonts.google.com/specimen/Montserrat*/
+ #define LV_FONT_MONTSERRAT_8  0
+ #define LV_FONT_MONTSERRAT_10 0
+-#define LV_FONT_MONTSERRAT_12 0
++#define LV_FONT_MONTSERRAT_12 1
+ #define LV_FONT_MONTSERRAT_14 1
+-#define LV_FONT_MONTSERRAT_16 0
++#define LV_FONT_MONTSERRAT_16 1
+ #define LV_FONT_MONTSERRAT_18 0
+ #define LV_FONT_MONTSERRAT_20 0
+-#define LV_FONT_MONTSERRAT_22 0
++#define LV_FONT_MONTSERRAT_22 1
+ #define LV_FONT_MONTSERRAT_24 0
+ #define LV_FONT_MONTSERRAT_26 0
+ #define LV_FONT_MONTSERRAT_28 0
+ #define LV_FONT_MONTSERRAT_30 0
+-#define LV_FONT_MONTSERRAT_32 0
++#define LV_FONT_MONTSERRAT_32 1
+ #define LV_FONT_MONTSERRAT_34 0
+ #define LV_FONT_MONTSERRAT_36 0
+ #define LV_FONT_MONTSERRAT_38 0
+@@ -688,18 +688,18 @@ extern uint32_t custom_tick_get(void);
+ #define LV_USE_DEMO_KEYPAD_AND_ENCODER     0
+ 
+ /*Benchmark your system*/
+-#define LV_USE_DEMO_BENCHMARK   0
++#define LV_USE_DEMO_BENCHMARK   1
+ 
+ /*Stress test for LVGL*/
+-#define LV_USE_DEMO_STRESS      0
++#define LV_USE_DEMO_STRESS      1
+ 
+ /*Music player demo*/
+-#define LV_USE_DEMO_MUSIC       0
++#define LV_USE_DEMO_MUSIC       1
+ #if LV_USE_DEMO_MUSIC
+ # define LV_DEMO_MUSIC_SQUARE       0
+-# define LV_DEMO_MUSIC_LANDSCAPE    0
++# define LV_DEMO_MUSIC_LANDSCAPE    1
+ # define LV_DEMO_MUSIC_ROUND        0
+-# define LV_DEMO_MUSIC_LARGE        0
++/*# define LV_DEMO_MUSIC_LARGE      0*/
+ # define LV_DEMO_MUSIC_AUTO_PLAY    0
+ #endif
+ 
+diff --git a/main.c b/main.c
+index 37cea28..6ba4335 100644
+--- a/main.c
++++ b/main.c
+@@ -223,7 +223,10 @@ void usage( char * name ) {
+ 	printf("\nusage: %s\n", name);
+ 	printf("   --primary,     -p  run the demo on the primary display connected to LCDC (fbdev or weston)\n");
+ 	printf("   --secondary,   -s  run the demo on SPI connected frame buffer display\n");
+-	printf("   --window,      -w  run the demo in a window instead of full screen (weston required)\n\n");
++	printf("   --window,      -w  run the demo in a window instead of full screen (weston required)\n");
++	printf("   --music,       -m  run optional Music-demo \n");
++	printf("   --stress,      -t  run optional Stress-demo \n");
++	printf("   --benchmark,   -b  run optional Benchmark-demo \n\n");
+ 	printf("   --help,        -h  print usage \n\n");
+ 	exit(0);
+ }
+@@ -234,18 +237,24 @@ int main(int argc, char *argv[])
+     bool window_mode = false ;
+     int window_dw = 70 ;
+     int window_dh = 70 ;
+-      
++    int demo_music = 0;
++    int demo_stress = 0;
++    int demo_benchmark = 0;
++              
+     /* command line option definition */
+     struct option longopt[] = {
+         {"primary",0,NULL,'p'},
+         {"secondary",0,NULL,'s'},
+         {"window",0,NULL,'w'},
++        {"music",0,NULL,'m'},
++        {"stress",0,NULL,'t'},
++        {"benchmark",0,NULL,'b'},                   
+         {0,0,0,0}
+     };
+         
+     /* command line parser */
+     int iChar ;
+-    while ((iChar=getopt_long(argc,argv,"pswh",longopt,NULL)) != -1)
++    while ((iChar=getopt_long(argc,argv,"pswmtbh",longopt,NULL)) != -1)
+     {
+         switch ( iChar )
+         {
+@@ -258,6 +267,21 @@ int main(int argc, char *argv[])
+             case 'w':
+                 window_mode = true ;
+                 break;
++            case 'm':
++                demo_music = true ;
++                demo_stress = false ;
++                demo_benchmark = false ;
++                break;                
++            case 't':
++                demo_music = false ;
++                demo_stress = true ;
++                demo_benchmark = false ;
++                break;       
++            case 'b':
++                demo_music = false ;
++                demo_stress = false ;
++                demo_benchmark = true ;
++                break;                                      
+             case 'h':
+                 usage(argv[0]);
+                 break;
+@@ -438,7 +462,18 @@ int main(int argc, char *argv[])
+     #endif
+ 
+     /*Create a Demo*/
+-    lv_demo_widgets();
++    
++    if ( !demo_music && !demo_stress && !demo_benchmark )
++      lv_demo_widgets() ;
++
++    if ( demo_music )
++      lv_demo_music() ;
++       
++    if ( demo_stress )
++      lv_demo_stress() ;
++        
++    if ( demo_benchmark )    
++      lv_demo_benchmark() ;
+ 
+     /*Handle LitlevGL tasks (tickless mode)*/
+     #if !USE_WAYLAND
+-- 
+2.25.1
+
