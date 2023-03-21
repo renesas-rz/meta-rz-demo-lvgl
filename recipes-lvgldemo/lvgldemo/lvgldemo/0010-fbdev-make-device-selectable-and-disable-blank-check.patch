@@ -1,0 +1,118 @@
+From f646659da0ccf2b0b2687bd75e8f65a08a9956d2 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:42:13 +0100
+Subject: [PATCH 1/3] fbdev make device selectable and disable blank check
+
+Three new functions:
+void fbdev_get_bitperpixel(uint32_t * bit_per_pixel);
+void fbdev_set_device(uint32_t id);
+void fbdev_disable_fbioblank (void);
+---
+ lv_drivers/display/fbdev.c | 42 ++++++++++++++++++++++++++++++++++++------
+ lv_drivers/display/fbdev.h |  3 +++
+ 2 files changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/lv_drivers/display/fbdev.c b/lv_drivers/display/fbdev.c
+index fe8d2ff..9c9f9c4 100644
+--- a/lv_drivers/display/fbdev.c
++++ b/lv_drivers/display/fbdev.c
+@@ -75,6 +75,8 @@ static struct fb_fix_screeninfo finfo;
+ static char *fbp = 0;
+ static long int screensize = 0;
+ static int fbfd = 0;
++static int fbid = -1 ;
++static bool screen_enable = 1 ;
+ 
+ /**********************
+  *      MACROS
+@@ -90,8 +92,19 @@ static int fbfd = 0;
+ 
+ void fbdev_init(void)
+ {
+-    // Open the file for reading and writing
+-    fbfd = open(FBDEV_PATH, O_RDWR);
++    // lets check if we find an ili
++
++    if ( fbid > -1 ) {      
++      char IARRAY[sizeof(FBDEV_PATH)+sizeof(int)];
++      const char* IARRAYTS = "/dev/fb" ;
++      snprintf(IARRAY,sizeof(IARRAY),"%s%hd",IARRAYTS,fbid);
++      printf("Framebuffer device    : %s\n",IARRAY);
++      // Open the file for reading and writing
++      fbfd = open(IARRAY, O_RDWR);
++    } else {
++      // Open the file for reading and writing
++      fbfd = open(FBDEV_PATH, O_RDWR);
++    }
+     if(fbfd == -1) {
+         perror("Error: cannot open framebuffer device");
+         return;
+@@ -99,11 +112,12 @@ void fbdev_init(void)
+     LV_LOG_INFO("The framebuffer device was opened successfully");
+ 
+     // Make sure that the display is on.
+-    if (ioctl(fbfd, FBIOBLANK, FB_BLANK_UNBLANK) != 0) {
+-        perror("ioctl(FBIOBLANK)");
+-        return;
++    if ( screen_enable ) {
++       if (ioctl(fbfd, FBIOBLANK, FB_BLANK_UNBLANK) != 0) {
++          perror("ioctl(FBIOBLANK)");
++          return;
++       }
+     }
+-
+ #if USE_BSD_FBDEV
+     struct fbtype fb;
+     unsigned line_length;
+@@ -166,6 +180,13 @@ void fbdev_exit(void)
+     close(fbfd);
+ }
+ 
++void fbdev_set_device(uint32_t id)
++{
++   if(id < 99) {
++     fbid=id ;
++   }
++}
++
+ /**
+  * Flush a buffer to the marked area
+  * @param drv pointer to driver where this function belongs
+@@ -263,11 +284,20 @@ void fbdev_get_sizes(uint32_t *width, uint32_t *height, uint32_t *dpi) {
+         *dpi = DIV_ROUND_UP(vinfo.xres * 254, vinfo.width * 10);
+ }
+ 
++void fbdev_get_bitperpixel(uint32_t *bit_per_pixel) {
++    if (bit_per_pixel)
++        *bit_per_pixel = vinfo.bits_per_pixel;
++}
++
+ void fbdev_set_offset(uint32_t xoffset, uint32_t yoffset) {
+     vinfo.xoffset = xoffset;
+     vinfo.yoffset = yoffset;
+ }
+ 
++void fbdev_disable_fbioblank ( void ) {
++  screen_enable = 0 ;
++}
++
+ /**********************
+  *   STATIC FUNCTIONS
+  **********************/
+diff --git a/lv_drivers/display/fbdev.h b/lv_drivers/display/fbdev.h
+index b7f2c81..08a4a1a 100644
+--- a/lv_drivers/display/fbdev.h
++++ b/lv_drivers/display/fbdev.h
+@@ -44,6 +44,9 @@ void fbdev_init(void);
+ void fbdev_exit(void);
+ void fbdev_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
+ void fbdev_get_sizes(uint32_t *width, uint32_t *height, uint32_t *dpi);
++void fbdev_get_bitperpixel(uint32_t * bit_per_pixel);
++void fbdev_disable_fbioblank ( void ) ;
++void fbdev_set_device(uint32_t id) ;
+ /**
+  * Set the X and Y offset in the variable framebuffer info.
+  * @param xoffset horizontal offset
+-- 
+2.25.1
+
