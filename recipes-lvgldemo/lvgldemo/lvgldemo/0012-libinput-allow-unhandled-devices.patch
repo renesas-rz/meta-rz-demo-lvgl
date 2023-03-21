@@ -1,0 +1,54 @@
+From a0368875eadfa74bc0131a82cc3f42018914f171 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:55:05 +0100
+Subject: [PATCH 3/3] libinput allow unhandled devices
+
+---
+ lv_drivers/indev/libinput.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/lv_drivers/indev/libinput.c b/lv_drivers/indev/libinput.c
+index fc995b1..29d1ca7 100644
+--- a/lv_drivers/indev/libinput.c
++++ b/lv_drivers/indev/libinput.c
+@@ -287,7 +287,8 @@ static bool rescan_devices(void) {
+ 
+     struct libinput_device *device = libinput_path_add_device(context, path);
+     if(!device) {
+-      perror("unable to add device to libinput context");
++      printf("libinput execption    : %s\n",path);
++      //perror("unable to add device to libinput context");
+       free(path);
+       continue;
+     }
+@@ -321,9 +322,11 @@ static bool rescan_devices(void) {
+       libinput_unref(context);
+       reset_scanned_devices();
+       return false;
++    } else {
++      printf("libinput touch device : %s\n",path);  
+     }
+-  }
+-
++  }  
++  
+   libinput_unref(context);
+   return true;
+ }
+@@ -387,8 +390,11 @@ static void read_pointer(libinput_drv_state_t *state, struct libinput_event *eve
+     case LIBINPUT_EVENT_TOUCH_MOTION:
+     case LIBINPUT_EVENT_TOUCH_DOWN:
+       touch_event = libinput_event_get_touch_event(event);
+-      lv_coord_t x = libinput_event_touch_get_x_transformed(touch_event, drv->physical_hor_res > 0 ? drv->physical_hor_res : drv->hor_res) - drv->offset_x;
+-      lv_coord_t y = libinput_event_touch_get_y_transformed(touch_event, drv->physical_ver_res > 0 ? drv->physical_ver_res : drv->ver_res) - drv->offset_y;
++      lv_coord_t x =  (lv_coord_t)libinput_event_touch_get_x_transformed(touch_event, drv->physical_hor_res > 0 ? drv->physical_hor_res : drv->hor_res) - drv->offset_x;
++      lv_coord_t y =  (lv_coord_t)libinput_event_touch_get_y_transformed(touch_event, drv->physical_ver_res > 0 ? drv->physical_ver_res : drv->ver_res) - drv->offset_y;
++      
++      // printf("physical_hor_res= %d, physical_ver_res= %d, offset_x= %d, offset_y= %d x= %d y=%d \n",drv->physical_hor_res, drv->physical_ver_res, drv->offset_x, drv->offset_y,x,y);
++       
+       if (x < 0 || x > drv->hor_res || y < 0 || y > drv->ver_res) {
+         break; /* ignore touches that are out of bounds */
+       }
+-- 
+2.25.1
+
