@@ -1,0 +1,123 @@
+From b0070ec529b92099490196775e73ea46050e2953 Mon Sep 17 00:00:00 2001
+From: Bernd Hollensteiner <Bernd.Hollensteiner@renesas.com>
+Date: Mon, 20 Mar 2023 20:49:18 +0100
+Subject: [PATCH 2/3] evdev add auto device Add absolute recognition for 
+ touch
+
+---
+ lv_drivers/indev/evdev.c | 54 ++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 47 insertions(+), 7 deletions(-)
+
+diff --git a/lv_drivers/indev/evdev.c b/lv_drivers/indev/evdev.c
+index 4d46b5b..7f767d7 100644
+--- a/lv_drivers/indev/evdev.c
++++ b/lv_drivers/indev/evdev.c
+@@ -7,6 +7,8 @@
+  *      INCLUDES
+  *********************/
+ #include "evdev.h"
++#include <stdlib.h>
++
+ #if USE_EVDEV != 0 || USE_BSD_EVDEV
+ 
+ #include <stdio.h>
+@@ -53,15 +55,48 @@ int evdev_key_val;
+  *   GLOBAL FUNCTIONS
+  **********************/
+ 
++/**
++ * lets take a simple scriptable way for the moment to get the device
++ * should be rewritten
++ */
++unsigned char getMouseId (void) {
++  FILE *fp;
++  char eventId[8];
++  int id=0;
++
++  fp = popen("ls -l /dev/input/by-path/*mouse | awk -F\"/\" 'BEGIN {s=\"0\"} {if ($NF ~ \"event\") {s = substr($NF,6,3); exit;}} END {printf(\"%s\",s); }' ", "r");
++  if (fp == NULL) {
++    printf("Failed to get mouse device.\n" );
++  }
++  while (fgets(eventId, sizeof(eventId), fp) != NULL) {
++      id = atoi(eventId);
++  }
++  pclose(fp);
++  if (id >99) {id = 99;}
++
++  return(id) ;
++}
+ /**
+  * Initialize the evdev interface
+  */
+ void evdev_init(void)
+ {
+-    if (!evdev_set_file(EVDEV_NAME)) {
++  char IARRAY[sizeof(EVDEV_NAME)+sizeof(int)];
++  const char* IARRAYTS = "/dev/input/ts_uinput" ;
++
++  if ( access(IARRAYTS, F_OK) == 0  ) {
++    printf("Use touch event device: %s\n", IARRAYTS);
++    if (!evdev_set_file(IARRAYTS)) {
+         return;
+     }
+-
++  } else {
++    unsigned char i = getMouseId() ;
++    snprintf(IARRAY,sizeof(IARRAY),"%s%hd",EVDEV_NAME,i);
++    printf("Use mouse event device: %s\n", IARRAY);
++    if (!evdev_set_file(IARRAY)) {
++        return;
++    }
++  }
+ #if USE_XKB
+     xkb_init();
+ #endif
+@@ -124,35 +159,40 @@ void evdev_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
+ 					evdev_root_y += in.value;
+ 				#endif
+         } else if(in.type == EV_ABS) {
+-            if(in.code == ABS_X)
++            if(in.code == ABS_X) {
+ 				#if EVDEV_SWAP_AXES
+ 					evdev_root_y = in.value;
+ 				#else
+ 					evdev_root_x = in.value;
+ 				#endif
+-            else if(in.code == ABS_Y)
++            } else if(in.code == ABS_Y) {
+ 				#if EVDEV_SWAP_AXES
+ 					evdev_root_x = in.value;
+ 				#else
+ 					evdev_root_y = in.value;
+ 				#endif
+-            else if(in.code == ABS_MT_POSITION_X)
++            } else if(in.code == ABS_MT_POSITION_X) {
+                                 #if EVDEV_SWAP_AXES
+                                         evdev_root_y = in.value;
+                                 #else
+                                         evdev_root_x = in.value;
+                                 #endif
+-            else if(in.code == ABS_MT_POSITION_Y)
++            } else if(in.code == ABS_MT_POSITION_Y) {
+                                 #if EVDEV_SWAP_AXES
+                                         evdev_root_x = in.value;
+                                 #else
+                                         evdev_root_y = in.value;
+                                 #endif
+-            else if(in.code == ABS_MT_TRACKING_ID) {
++            } else if(in.code == ABS_MT_TRACKING_ID) {
+                                 if(in.value == -1)
+                                     evdev_button = LV_INDEV_STATE_REL;
+                                 else if(in.value == 0)
+                                     evdev_button = LV_INDEV_STATE_PR;
++            } else if(in.code == ABS_PRESSURE) {
++                                if(in.value == 0 )
++                                    evdev_button = LV_INDEV_STATE_REL;
++                                else if(in.value > 1)
++                                    evdev_button = LV_INDEV_STATE_PR;
+             }
+         } else if(in.type == EV_KEY) {
+             if(in.code == BTN_MOUSE || in.code == BTN_TOUCH) {
+-- 
+2.25.1
+
