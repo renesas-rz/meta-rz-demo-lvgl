@@ -1,5 +1,8 @@
 # meta-rz-demo-lvgl  
-yocto meta layer for lvgl demo  
+yocto meta layer for lvgl demo   
+**Referenced source:** [lv_port_linux_frame_buffer](https://github.com/lvgl/lv_port_linux_frame_buffer)  
+Some patches will be add to the package to adapt  
+the functionality and user interface for the supported RZ EVK kits  
   
 Dependencies  
 ============  
@@ -17,7 +20,7 @@ meta-openembedded
    *    Renesas RZG2UL-EVK [rzg_bsp_v3.0.1]  
    *    Renesas RZG2VL-EVK [rzv_bsp_v3.0.2]  
   
-
+  
 Patches  
 =======  
  
